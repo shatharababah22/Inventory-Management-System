@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect,useRef } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { Link } from "react-router-dom";
+import jsPDF from "jspdf";
 
 const Stock = () => {
   const [stock, setstock] = useState([]);
-
+  const pdfRef= useRef();
   const handleDelete = (id) => {
     Swal.fire({
       title: "Are you sure?",
@@ -43,6 +44,20 @@ const Stock = () => {
     });
   }, []);
 
+  const generatePDF = () => {
+    const doc = new jsPDF();
+    doc.text("Stock List", 10, 10);
+    let y = 20;
+    stock.forEach((item) => {
+      doc.text(`Product Name: ${item.product_name}`, 10, y);
+      doc.text(`Current Quantity: ${item.current_qty}`, 10, y + 5);
+      doc.text(`Max Quantity: ${item.max_qty}`, 10, y + 10);
+      doc.text(`Min Quantity: ${item.min_qty}`, 10, y + 15);
+      y += 25;
+    });
+    doc.save("stock_list.pdf");
+  };
+
   return (
     <div class="page-wrapper">
       <div className="content">
@@ -59,7 +74,7 @@ const Stock = () => {
                     </div> */}
         </div>
 
-        <div className="card">
+        <div className="card" ref={pdfRef}>
           <div className="card-body">
             <div className="table-top">
               <div className="search-set">
@@ -84,6 +99,7 @@ const Stock = () => {
                       data-bs-toggle="tooltip"
                       data-bs-placement="top"
                       title="pdf"
+                      onClick={generatePDF}
                     >
                       <img src="assets/img/icons/pdf.svg" alt="img" />
                     </a>
@@ -219,5 +235,4 @@ const Stock = () => {
     </div>
   );
 };
-
 export default Stock;
