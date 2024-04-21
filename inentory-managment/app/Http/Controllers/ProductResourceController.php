@@ -117,6 +117,14 @@ class ProductResourceController extends Controller
         return response()->json($product);
     }
 
+    
+    public function ExpireProducts()
+    {
+        $products = Product::where('status', 0)->get();
+        return response()->json($products);
+    }
+    
+
     /**
      * Show the form for editing the specified resource.
      *

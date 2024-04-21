@@ -1,7 +1,10 @@
 <?php
 
 namespace App\Http\Controllers;
+
+use App\Models\Buyer;
 use App\Models\Order;
+use App\Models\Supplier;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
@@ -12,24 +15,24 @@ class OrderController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function index()
-    {		
-     
-            $orders = Order::select('orders.*',
-               
-                'buyers.firstname as buyer_firstname',
-                'buyers.email as buyer_email',
-             'products.name as product_name',
-                'payment_methods.payment_type',
-                'orders_details.quantity_ordered'
-            )
+    {
+
+        $orders = Order::select(
+            'orders.*',
+
+            'buyers.firstname as buyer_firstname',
+            'buyers.email as buyer_email',
+            'products.name as product_name',
+            'payment_methods.payment_type',
+            'orders_details.quantity_ordered'
+        )
             ->join('buyers', 'orders.buyer_id', '=', 'buyers.id')
             ->join('orders_details', 'orders_details.order_id', '=', 'orders.id')
             ->join('payment_methods', 'orders.paymentmethod_id', '=', 'payment_methods.id')
             ->join('products', 'orders_details.product_id', '=', 'products.id')
             ->get();
-    
-            return response()->json($orders);
-  
+
+        return response()->json($orders);
     }
 
     /**
@@ -41,6 +44,21 @@ class OrderController extends Controller
     {
         //
     }
+
+    public function AllBuyers()
+    {
+        $buyers = Buyer::all();
+        return response()->json($buyers);
+    }
+
+    
+    public function AllSuppliers()
+    {
+        $buyers = Supplier::all();
+        return response()->json($buyers);
+    }
+
+    
 
     /**
      * Store a newly created resource in storage.
@@ -96,13 +114,13 @@ class OrderController extends Controller
     public function destroy($id)
     {
         $order = Order::find($id);
-        
+
         if (!$order) {
-            return response()->json(['message' => 'Category not found'], 404);
+            return response()->json(['message' => 'Order not found'], 404);
         }
 
         $order->delete();
 
-        return response()->json(['message' => 'Category deleted successfully'], 200);
+        return response()->json(['message' => 'Order deleted successfully'], 200);
     }
 }

@@ -118,13 +118,23 @@ class StockResourceController extends Controller
     public function destroy($id)
     {
         $stock = Stock::find($id);
-
+    
         if (!$stock) {
-            return response()->json(['message' => 'Category not found'], 404);
+            return response()->json(['message' => 'Stock not found'], 404);
         }
-
+    
+        // Fetch the related product
+        $product = $stock->product;
+    
+        // Delete the stock
         $stock->delete();
-
-        return response()->json(['message' => 'Category deleted successfully'], 200);
+    
+        // If a related product exists, update its status to 0
+        if ($product) {
+            $product->delete();
+        }
+    
+        return response()->json(['message' => 'Stock deleted successfully'], 200);
     }
+    
 }

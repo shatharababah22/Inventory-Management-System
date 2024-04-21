@@ -33,6 +33,8 @@ const AddProductForm = () => {
 
   // Function to handle form submission
   const handleFormSubmit = async (e) => {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
     e.preventDefault();
     try {
       const formData = new FormData();
@@ -50,9 +52,12 @@ const AddProductForm = () => {
       }
       console.log(categoryID)
       const response = await axios.post('http://127.0.0.1:8000/api/products', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+        
+          headers: {
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json',
+    
+          },
       });
 
       navigate("/");

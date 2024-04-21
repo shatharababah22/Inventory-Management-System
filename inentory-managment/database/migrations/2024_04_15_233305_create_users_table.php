@@ -15,14 +15,16 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('firstname');
-            $table->unsignedBigInteger('phone');
+            $table->string('name'); 
+            $table->unsignedBigInteger('phone')->nullable(); 
             $table->string('email');
-            $table->unsignedBigInteger('password');
-            $table->string('image');
-            $table->date('birthday');
-            $table->unsignedBigInteger('lastname');
-            $table->unsignedBigInteger('role');
+            $table->string('password');
+            $table->string('image')->nullable(); 
+            $table->date('birthday')->nullable(); 
+            $table->boolean('role')->nullable(); 
+            $table->timestamp('email_verified_at')->nullable();
+            $table->timestamps();
+      
         });
         Schema::enableForeignKeyConstraints();
     }

@@ -49,10 +49,10 @@ const ProductList = () => {
     };
 
 
-
-    
     useEffect(() => {
-        axios.get("http://127.0.0.1:8000/api/products").then((response) => {
+        axios.get("http://127.0.0.1:8000/api/products")
+        
+        .then((response) => {
           setProduct(response.data);
           console.log(response.data)
         });

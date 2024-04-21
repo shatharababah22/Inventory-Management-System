@@ -6,6 +6,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductResourceController;
 use App\Http\Controllers\StockResourceController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\API\RegisterController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -17,13 +18,35 @@ use App\Http\Controllers\OrderController;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+/** ---------Register and Login ----------- */
+Route::controller(RegisterController::class)->group(function()
+{
+    Route::post('register', 'register');
+    Route::post('login', 'login');
+    // Route::post('users', 'login')->name('index');
+
+});
+
+/** -----------Users --------------------- */
+
+
+
+Route::middleware('api')->group(function () {
+    Route::resource('categories', CategoryController::class);
+    Route::resource('products', ProductResourceController::class);
+    Route::resource('stock', StockResourceController::class);
+    Route::resource('orders', OrderController::class);
+    Route::get('buyers', [OrderController::class, 'AllBuyers']);
+    Route::get('suppliers', [OrderController::class, 'AllSuppliers']);
+    Route::get('expire_products', [ProductResourceController::class, 'ExpireProducts']);
+  
+});
+
+
+Route::middleware('auth:sanctum')->controller(RegisterController::class)->group(function() {
+    Route::get('/users','index')->name('index');
+
 });
 
 
 
-Route::resource('categories', CategoryController::class);
-Route::resource('products', ProductResourceController::class);
-Route::resource('stock', StockResourceController::class);
-Route::resource('orders', OrderController::class);
