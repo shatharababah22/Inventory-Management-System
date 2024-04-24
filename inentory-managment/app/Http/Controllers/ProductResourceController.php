@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Stock;
+use App\Models\SupplierOrderDetail;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -187,9 +188,7 @@ class ProductResourceController extends Controller
     
 
             $product->save();
-            $categories = Category::all();
-            return response()->json(['message' => 'Product updated successfully', 'categories' => $categories], 200);
-
+           
  
             return response()->json(['message' => 'Product updated successfully'], 200);
         } catch (\Exception $e) {
@@ -211,6 +210,11 @@ class ProductResourceController extends Controller
         if (!$product) {
             return response()->json(['message' => 'Category not found'], 404);
         }
+        $orders = SupplierOrderDetail::where('product_id', $id)->exists();
+        if ($orders) {
+            return response()->json(['message' => 'Product has associated orders. Can not delete.'], 400);
+        }
+    
         $stock->delete();
         $product->delete();
    

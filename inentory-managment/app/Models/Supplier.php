@@ -17,4 +17,6 @@ class Supplier extends Model
         'lastname',
         'password'
     ];
+    public $timestamps = false;
+
 }

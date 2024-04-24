@@ -3,12 +3,13 @@ import React, { useState, useEffect } from "react";
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import { Link } from 'react-router-dom';
+import useAuthenticatedFetch from "../ExtraPages/api";
 
 
 const CategoryList = () => {
-
+    const authToken = localStorage.getItem('authToken');
     const [category, setCategory] = useState([]);
-
+    const { data: categoriesData, error } = useAuthenticatedFetch("http://127.0.0.1:8000/api/categories");
     const handleDelete = (id) => {
         Swal.fire({
             title: 'Are you sure?',
@@ -20,24 +21,38 @@ const CategoryList = () => {
             reverseButtons: true
         }).then((result) => {
             if (result.isConfirmed) {
-                axios.delete(`http://127.0.0.1:8000/api/categories/${id}`)
-                    .then(response => {
-                        setCategory(category.filter(category => category.id !== id));
-                        console.log('Item deleted successfully');
+                axios.delete(`http://127.0.0.1:8000/api/categories/${id}`, {
+                    headers: {   
+                        Authorization: `Bearer ${authToken}`
+                    }
+                })
+                .then(response => {
+                    setCategory(category.filter(category => category.id !== id));
+                    console.log('Item deleted successfully');
+                    Swal.fire(
+                        'Deleted!',
+                        'Your item has been deleted.',
+                        'success'
+                    );
+                })
+                .catch(error => {
+                    console.error('Error deleting item:', error);
+                    if (error.response && error.response.status === 400) {
+
                         Swal.fire(
-                            'Deleted!',
-                            'Your item has been deleted.',
-                            'success'
+                            'Error!',
+                            error.response.data.message,
+                            'error'
                         );
-                    })
-                    .catch(error => {
-                        console.error('Error deleting item:', error);
+                    } else {
+  
                         Swal.fire(
                             'Error!',
                             'An error occurred while deleting the item.',
                             'error'
                         );
-                    });
+                    }
+                });
             } else if (result.dismiss === Swal.DismissReason.cancel) {
                 Swal.fire(
                     'Cancelled',
@@ -47,11 +62,13 @@ const CategoryList = () => {
             }
         });
     };
-    useEffect(() => {
-        axios.get("http://127.0.0.1:8000/api/categories").then((response) => {
-          setCategory(response.data);
-        });
-      }, []);
+    
+
+      useEffect(() => {
+        if (categoriesData) {
+            setCategory(categoriesData);
+        }
+    }, [categoriesData]);
 
     return (
         <div class="page-wrapper">

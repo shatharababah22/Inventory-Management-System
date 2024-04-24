@@ -9,27 +9,30 @@ const EditStockForm = () => {
   const [max_qty, setMax_qty] = useState(0);
   const [min_qty, setMin_qty] = useState(0);
   const [current_qty, setCurrent_qty] = useState("");
-  
+  const authToken = localStorage.getItem("authToken");
   const [validationError, setValidationError] = useState({});
-
 
   useEffect(() => {
     fetchStock();
   }, []);
- 
+
   const fetchStock = async () => {
     try {
       const response = await axios.get(
-        `http://127.0.0.1:8000/api/stock/${id}`
+        `http://127.0.0.1:8000/api/stock/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        }
       );
       const { data } = response;
-      console.log(data[0])
+      console.log(data[0]);
       if (data[0]) {
-        const { max_qty, min_qty,current_qty } = data[0];
+        const { max_qty, min_qty, current_qty } = data[0];
         setMax_qty(max_qty);
         setMin_qty(min_qty);
         setCurrent_qty(current_qty);
-       
       } else {
         Swal.fire({
           text: "Category data not found",
@@ -50,13 +53,18 @@ const EditStockForm = () => {
     formData.append("_method", "PATCH");
     formData.append("max_qty", max_qty);
     formData.append("min_qty", min_qty);
-    formData.append("current_qty", min_qty);
+    formData.append("current_qty", min_qty); // Typo: Should be formData.append("current_qty", current_qty);
 
     console.log(Image);
     try {
       const response = await axios.post(
         `http://127.0.0.1:8000/api/stock/${id}`,
-        formData
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        }
       );
       const { data } = response;
       Swal.fire({
@@ -64,18 +72,26 @@ const EditStockForm = () => {
         text: data.message,
       });
       navigate("/stock");
-    } catch ({ response }) {
-      if (response && response.status === 422) {
-        setValidationError(response.data.errors);
-      } else {
-        Swal.fire({
-          text: response ? response.data.message : "Error updating category",
-          icon: "error",
-        });
+    } catch (error) {
+      console.error("Error updating category:", error);
+      let errorMessage = "An error occurred while updating the category.";
+      if (error.response && error.response.data && error.response.data.errors) {
+        // Get the validation error message
+        errorMessage = Object.values(error.response.data.errors)[0];
+      } else if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message
+      ) {
+        // Get the error message from the server
+        errorMessage = error.response.data.message;
       }
+      Swal.fire({
+        text: errorMessage,
+        icon: "error",
+      });
     }
   };
-
 
   return (
     <div className="page-wrapper">
@@ -103,7 +119,7 @@ const EditStockForm = () => {
             )}
             <form onSubmit={updateCategory}>
               <div className="row">
-              <div className="col-lg-12 col-sm-12 col-12">
+                <div className="col-lg-12 col-sm-12 col-12">
                   <div className="form-group">
                     <label>Current quantity</label>
                     <input
@@ -139,7 +155,6 @@ const EditStockForm = () => {
                     />
                   </div>
                 </div>
-
               </div>
               <div className="col-lg-12">
                 <button type="submit" className="btn btn-submit me-2">

@@ -20,7 +20,8 @@ return new class extends Migration
             $table->string('email');
             $table->string('image');
             $table->date('birthday');
-            $table->unsignedBigInteger('lastname');
+            $table->string('lastname');
+            $table->string('password');
         });
 
         Schema::enableForeignKeyConstraints();

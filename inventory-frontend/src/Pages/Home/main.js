@@ -1,22 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import Statistics from './statistic';
 import axios from 'axios';
+import { useNavigate } from "react-router-dom";
 
 const Main = () => {
   const [recentlyAddedProducts, setRecentlyAddedProducts] = useState([]);
   const [expiredProducts, setExpiredProducts] = useState([]);
-
+  const authToken = localStorage.getItem('authToken');
+  const navigate = useNavigate();
   useEffect(() => {
-    // Fetch recently added products
-    axios.get("http://127.0.0.1:8000/api/products?_sort=createdAt&_order=desc&_limit=5").then((response) => {
+    if(!authToken){
+      navigate('/adminlogin')
+    }else{
+    
+    axios.get("http://127.0.0.1:8000/api/products?_sort=createdAt&_order=desc&_limit=5",{
+      headers: {   
+          Authorization: `Bearer ${authToken}`
+      }
+  }).then((response) => {
       setRecentlyAddedProducts(response.data);
     });
     
 
-    axios.get("http://127.0.0.1:8000/api/expire_products").then((response) => {
+    axios.get("http://127.0.0.1:8000/api/expire_products",{
+      headers: {   
+          Authorization: `Bearer ${authToken}`
+      }
+  }).then((response) => {
       setExpiredProducts(response.data);
     });
-  }, []);
+  }}, []);
+  
 
   return (
     <div className="page-wrapper">
@@ -84,7 +98,7 @@ const Main = () => {
                             </a>
                             <a href={`productlist.html?id=${product.id}`}>{product.name}</a>
                           </td>
-                          <td>${product.price}</td>
+                          <td>JD {product.price}</td>
                         </tr>
                       ))}
                     </tbody>

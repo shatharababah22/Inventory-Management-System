@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import jsPDF from "jspdf";
 
 import html2canvas from "html2canvas";
 
 const Stock = () => {
+  const navigate = useNavigate();
   const [stock, setstock] = useState([]);
   const pdfRef = useRef();
+  const authToken = localStorage.getItem("authToken");
   const handleDelete = (id) => {
     Swal.fire({
       title: "Are you sure?",
@@ -21,7 +23,11 @@ const Stock = () => {
     }).then((result) => {
       if (result.isConfirmed) {
         axios
-          .delete(`http://127.0.0.1:8000/api/stock/${id}`)
+          .delete(`http://127.0.0.1:8000/api/stock/${id}`, {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+            },
+          })
           .then((response) => {
             setstock(stock.filter((stock) => stock.id !== id));
             console.log("Item deleted successfully");
@@ -41,19 +47,58 @@ const Stock = () => {
     });
   };
   useEffect(() => {
-    axios.get("http://127.0.0.1:8000/api/stock").then((response) => {
-      setstock(response.data);
-    });
+    if (authToken) {
+      axios
+        .get("http://127.0.0.1:8000/api/stock", {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        })
+        .then((response) => {
+          setstock(response.data);
+        });
+    } else {
+      navigate("/adminlogin");
+    }
   }, []);
-
   const generatePDF = () => {
     const input = pdfRef.current;
-    const stockDetails = "Stock Details:"; 
-  
-    html2canvas(input).then((canvas) => {
+
+    const tableContentClone = input.cloneNode(true);
+    document.body.appendChild(tableContentClone);
+
+    const checkboxes = tableContentClone.querySelectorAll(
+      "td input[type='checkbox']"
+    );
+    checkboxes.forEach((checkbox) => {
+      checkbox.parentNode.parentNode.removeChild(checkbox.parentNode);
+    });
+
+    const actionColumns = tableContentClone.querySelectorAll(
+      " thead th:nth-child(7),  tbody td:nth-child(7)"
+    );
+    actionColumns.forEach((column) => {
+      column.style.display = "none";
+    });
+
+    const imageColumnHeader = tableContentClone.querySelector(
+      "thead th:nth-child(2)"
+    );
+    if (imageColumnHeader) {
+      imageColumnHeader.style.display = "none";
+    }
+
+    const imageColumns = tableContentClone.querySelectorAll(
+      "tbody td:nth-child(2)"
+    );
+    imageColumns.forEach((column) => {
+      column.style.display = "none";
+    });
+
+    html2canvas(tableContentClone).then((canvas) => {
       const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF("landscape", "mm", "a4", true);
-  
+
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       const imgWidth = canvas.width;
@@ -61,24 +106,27 @@ const Stock = () => {
       const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
       const imgX = (pdfWidth - pdfWidth * ratio) / 50;
       const imgY = 5;
-  
-      // Add text before displaying the stock
-      pdf.text(stockDetails, imgX, imgY + 10); // Adjust the Y coordinate as needed
-  
-      // Add the image of the stock
+
+      pdf.setFillColor(241, 243, 244);
+
+      pdf.rect(0, 0, pdfWidth, pdfHeight, "F");
+
+      pdf.text("Stock Report:", imgX, imgY + 10);
+
       pdf.addImage(
         imgData,
         "PNG",
         imgX,
-        imgY + 20, // Adjust the Y coordinate to leave space for the text
+        imgY + 40,
         imgWidth * ratio,
         imgHeight * ratio
       );
-  
+
       pdf.save("Stock.pdf");
+
+      document.body.removeChild(tableContentClone);
     });
   };
-  
 
   return (
     <div class="page-wrapper">
@@ -86,14 +134,8 @@ const Stock = () => {
         <div className="page-header">
           <div className="page-title">
             <h4>Product stock list</h4>
-            <h6>View/Search product stock</h6>
+            <h6>View product stock</h6>
           </div>
-          {/* <div className="page-btn">
-                    <Link to="/add" className="btn btn-added">
-
-                            <img src="assets/img/icons/plus.svg" className="me-1" alt="img" />Add stock
-                        </Link>
-                    </div> */}
         </div>
 
         <div className="card">
@@ -145,47 +187,6 @@ const Stock = () => {
                     </a>
                   </li>
                 </ul>
-              </div>
-            </div>
-
-            <div className="card" id="filter_inputs">
-              <div className="card-body pb-0">
-                <div className="row">
-                  <div className="col-lg-2 col-sm-6 col-12">
-                    <div className="form-group">
-                      <select className="select">
-                        <option>Choose stock</option>
-                        <option>Computers</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div className="col-lg-2 col-sm-6 col-12">
-                    <div className="form-group">
-                      <select className="select">
-                        <option>Choose Sub stock</option>
-                        <option>Fruits</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div className="col-lg-2 col-sm-6 col-12">
-                    <div className="form-group">
-                      <select className="select">
-                        <option>Choose Sub Brand</option>
-                        <option>Iphone</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div className="col-lg-1 col-sm-6 col-12 ms-auto">
-                    <div className="form-group">
-                      <a className="btn btn-filters ms-auto">
-                        <img
-                          src="assets/img/icons/search-whites.svg"
-                          alt="img"
-                        />
-                      </a>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
 

@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
-import { Link } from "react-router-dom";
+import { Link ,useNavigate} from "react-router-dom";
+import useAuthenticatedFetch from "../ExtraPages/api";
 
 const Orders = () => {
-  // Define the state to hold the orders
+
   const [orders, setOrders] = useState([]);
 
-  // Function to handle deletion of an order
+  const token = localStorage.getItem('authToken'); 
+
   const handleDelete = (id) => {
     Swal.fire({
       title: "Are you sure?",
@@ -20,7 +22,11 @@ const Orders = () => {
     }).then((result) => {
       if (result.isConfirmed) {
         axios
-          .delete(`http://127.0.0.1:8000/api/orders/${id}`)
+          .delete(`http://127.0.0.1:8000/api/orders/${id}`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        })
           .then((response) => {
             setOrders(orders.filter((order) => order.id !== id));
             console.log("Order deleted successfully");
@@ -39,12 +45,13 @@ const Orders = () => {
       }
     });
   };
+  const { data: ordersData, error } = useAuthenticatedFetch("http://127.0.0.1:8000/api/orders");
 
   useEffect(() => {
-    axios.get("http://127.0.0.1:8000/api/orders").then((response) => {
-      setOrders(response.data);
-    });
-  }, []);
+    if (ordersData) {
+      setOrders(ordersData);
+    }
+  }, [ordersData]);
 
   return (
     <div className="page-wrapper">
@@ -55,7 +62,7 @@ const Orders = () => {
             <h6>View/Search orders</h6>
           </div>
            <div className="page-btn">
-                    <Link to="/add" className="btn btn-added">
+                    <Link to="/addorder" className="btn btn-added">
 
                             <img src="assets/img/icons/plus.svg" className="me-1" alt="img" />Add stock
                         </Link>
@@ -74,12 +81,10 @@ const Orders = () => {
                         <span className="checkmarks"></span>
                       </label>
                     </th>
-                    <th>Customer Name</th>
-                    <th>Customer email</th>
+                    <th>Supplier Name</th>
+                    <th>Supplier email</th>
                     <th>Order date</th>
-                    <th>Payment Type</th>
                     <th>Total amount</th>
-
                     <th>qty</th>
                     <th>Action</th>
                   </tr>
@@ -96,9 +101,7 @@ const Orders = () => {
                       <td>{order.buyer_firstname}</td>
                       <td>{order.buyer_email}</td>
                       <td>{order.date}</td>
-                      <td>{order.payment_type}</td>
                       <td>{order.total_amount}</td>
-
                       <td>{order.quantity_ordered}</td>
                       <td>
                         <Link to={`/order/edit/${order.id}`} class="me-3">

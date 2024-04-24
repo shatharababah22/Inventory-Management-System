@@ -6,22 +6,32 @@ const Statistics = () => {
   const [suppliersCount, setSuppliersCount] = useState(0);
   const [productsCount, setProductsCount] = useState(0);
   const [stockCount, setStockCount] = useState(0);
+  const authToken = localStorage.getItem('authToken');
   useEffect(() => {
-    axios.get("http://127.0.0.1:8000/api/buyers").then((response) => {
+    axios.get("http://127.0.0.1:8000/api/buyers", {headers: {   
+      Authorization: `Bearer ${authToken}`
+  }}).then((response) => {
       setCustomersCount(response.data.length); 
     });
     
  
-    axios.get("http://127.0.0.1:8000/api/suppliers").then((response) => {
+    axios.get("http://127.0.0.1:8000/api/suppliers",{ headers: {   
+      Authorization: `Bearer ${authToken}`
+  }}).then((response) => {
       setSuppliersCount(response.data.length); 
     });
-    axios.get("http://127.0.0.1:8000/api/products").then((response) => {
+    axios.get("http://127.0.0.1:8000/api/products",{ headers: {   
+      Authorization: `Bearer ${authToken}`
+  }}).then((response) => {
       setProductsCount(response.data.length); 
     });
-    axios.get("http://127.0.0.1:8000/api/stock").then((response) => {
-      const filteredStock = response.data.filter(item => item.current_qty < item.min_qty);
-      const totalStock = filteredStock.reduce((acc, item) => acc + item.current_qty, 0);
-      setStockCount(totalStock);
+    axios.get("http://127.0.0.1:8000/api/stock",{ headers: {   
+      Authorization: `Bearer ${authToken}`
+  }}).then((response) => {
+  
+const filteredStock = response.data.filter(item => item.current_qty <= item.min_qty);
+const lowStockCount = filteredStock.length;
+      setStockCount(lowStockCount);
     });
     
 
@@ -67,7 +77,7 @@ const Statistics = () => {
         <div className="dash-count das3">
           <div className="dash-counts">
             <h4>{stockCount}</h4>
-            <h5>Current products in stock</h5>
+            <h5>Low stock products</h5>
           </div>
           <div className="dash-imgs">
             <i data-feather="file"></i>

@@ -1,6 +1,122 @@
-import React, { useState } from "react";
-
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
+const authToken = localStorage.getItem('authToken');
 const AddOrder = () => {
+
+  
+  const [products, setProducts] = useState([]);
+  const navigate = useNavigate();
+  const [date, setDate] = useState("");
+  const [quantity, setQuantity] = useState("");
+  const [suppliers, setSuppliers] = useState([]);
+  const [selectedSupplier, setSelectedSupplier] = useState("");
+  const [selectedProduct, setSelectedProduct] = useState("");
+ 
+
+
+  useEffect(() => {
+    axios
+      .get("http://127.0.0.1:8000/api/products",{headers: {   
+        Authorization: `Bearer ${authToken}`
+    }})
+      .then((response) => {
+        setProducts(response.data);
+      })
+      .catch((error) => {
+        console.error("Error fetching products:", error);
+      });
+
+    axios
+      .get("http://127.0.0.1:8000/api/suppliers",{headers: {   
+        Authorization: `Bearer ${authToken}`
+    }})
+      .then((response) => {
+        setSuppliers(response.data);
+      })
+
+      .catch((error) => {
+        console.error("Error fetching suppliers:", error);
+      });
+  }, []);
+
+
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+  
+    const orderFormData = {
+      date: date,
+      total_amount: quantity,
+      supplier_id: selectedSupplier,
+    };
+  
+    axios
+      .post("http://127.0.0.1:8000/api/orders", orderFormData, {
+        headers: {
+          Authorization: `Bearer ${authToken}`
+        }
+      })
+      .then((orderResponse) => {
+        console.log("Order submitted successfully:", orderResponse.data);
+  
+        const orderId = orderResponse.data.order.id;
+  
+        const selectedProductData = products.find(
+          (product) => product.id === selectedProduct
+        );
+        const subTotal = selectedProductData
+          ? selectedProductData.price * quantity
+          : 0;
+  
+        const orderDetailsFormData = {
+          order_id: orderId,
+          product_id: selectedProduct,
+          quantity_ordered: quantity,
+          sub_total: subTotal,
+        };
+  
+        axios
+          .post(
+            "http://127.0.0.1:8000/api/orders_details",
+            orderDetailsFormData, {
+              headers: {
+                Authorization: `Bearer ${authToken}`
+              }
+            }
+          )
+          .then((detailsResponse) => {
+            Swal.fire(
+              'Success!',
+              'Order added successfully.',
+              'success'
+            );
+            navigate("/order");
+          })
+          .catch((error) => {
+            console.error("Error submitting order details:", error.response.data);
+            // Display validation errors using SweetAlert
+            if (error.response && error.response.data && error.response.data.error) {
+              Swal.fire("Error", error.response.data.error, "error");
+            } else {
+              Swal.fire("Error", "An error occurred while submitting order details.", "error");
+            }
+          });
+      })
+      .catch((error) => {
+        console.error("Error submitting order:", error.response.data);
+        // Display validation errors using SweetAlert
+        if (error.response && error.response.data && error.response.data.error) {
+          Swal.fire("Error", error.response.data.error, "error");
+        } else {
+          Swal.fire("Error", "An error occurred while submitting order.", "error");
+        }
+      });
+  };
+  
+  
+  
+
   return (
     <div className="page-wrapper">
       <div className="content">
@@ -14,17 +130,39 @@ const AddOrder = () => {
           <div className="card-body">
             <form onSubmit={handleFormSubmit}>
               <div className="row">
-                <div className="col-lg-6 col-sm-6 col-12">
+                {/* Supplier */}
+                <div className="col-lg-4 col-sm-12">
+
+                  <div className="form-group">
+                    <label>Supplier</label>
+                    <select
+                      className="form-control"
+                      name="supplier_id"
+                      value={selectedSupplier}
+                      onChange={(e) => setSelectedSupplier(e.target.value)}
+                      required
+                    >
+                      <option value="">Select Supplier</option>
+                      {suppliers.map((supplier) => (
+                        <option key={supplier.id} value={supplier.id}>
+                          {supplier.firstname}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                {/* Product */}
+                <div className="col-lg-4 col-sm-12">
+
                   <div className="form-group">
                     <label>Product</label>
                     <select
-                      name="product_id"
                       className="form-control"
-                      value={productID}
-                      onChange={(e) => setProductID(e.target.value)}
+                      value={selectedProduct}
+                      onChange={(e) => setSelectedProduct(e.target.value)}
                       required
                     >
-                      <option value="">Select product</option>
+                      <option value="">Select Product</option>
                       {products.map((product) => (
                         <option key={product.id} value={product.id}>
                           {product.name}
@@ -34,54 +172,25 @@ const AddOrder = () => {
                   </div>
                 </div>
 
-                <div className="col-lg-6 col-sm-6 col-12">
+                <div className="col-lg-4 col-sm-12">
+
                   <div className="form-group">
-                    <label>Custumer</label>
-                    <select
-                      name="product_id"
-                      className="form-control"
-                      value={CustumerID}
-                      onChange={(e) => setCustumerID(e.target.value)}
+                    <label>Qty</label>
+                    <input
+                      type="text"
+                      name="quantity_ordered"
+                      value={quantity}
+                      onChange={(e) => setQuantity(e.target.value)}
                       required
-                    >
-                      <option value="">Select Custumer</option>
-                      {buyers.map((buyer) => (
-                        <option key={buyer.id} value={buyer.id}>
-                          {buyer.name}
-                        </option>
-                      ))}
-                    </select>
+                    />
                   </div>
                 </div>
 
-                <div className="col-lg-6 col-sm-6 col-12">
+                <div className="col-lg-4 col-sm-12">
                   <div className="form-group">
-                    <label>Payment method</label>
-                    <select
-                      name="buyer_id"
-                      className="form-control"
-                      value={PaymentMethod}
-                      onChange={(e) => setPaymentMethod(e.target.value)}
-                      required
-                    >
-                      <option value="">Select Custumer</option>
-                      {payment_methods.map((payment_method) => (
-                        <option key={payment_method.id} value={payment_method.id}>
-                          {buyer.payment_type}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-
-
-                <div className="col-lg-6 col-sm-6 col-12">
-                  <div className="form-group">
-                    <label>Price</label>
+                    <label>Date</label>
                     <input
                       type="date"
-                      className="form-control"
                       name="date"
                       value={date}
                       onChange={(e) => setDate(e.target.value)}
@@ -89,10 +198,6 @@ const AddOrder = () => {
                     />
                   </div>
                 </div>
-
-            
-
-           
 
                 <div className="col-lg-12">
                   <button type="submit" className="btn btn-submit me-2">

@@ -17,47 +17,70 @@ const EditProductForm = () => {
   const [validationError, setValidationError] = useState({});
   const imageInput1 = useRef(null);
   const imageInput2 = useRef(null);
-
+  const token = localStorage.getItem("authToken");
   useEffect(() => {
     fetchProduct();
     fetchCategories();
   }, []);
 
   const fetchProduct = async () => {
-    try {
-      const response = await axios.get(
-        `http://127.0.0.1:8000/api/products/${id}`
-      );
-      const { data } = response;
-      if (data) {
-        const { name, description, price, category_id, image1, image2, status } = data;
-        setName(name);
-        setDescription(description);
-        setPrice(price);
-        setCategoryID(category_id);
-        setImage1(image1); 
-        setImage2(image2);
-        setStatus(status);
-      } else {
+    if (!token) {
+      // If token doesn't exist, navigate to login
+      navigate("/login");
+      return; // Exit early
+    } else {
+      try {
+        const response = await axios.get(
+          `http://127.0.0.1:8000/api/products/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        const { data } = response;
+        if (data) {
+          const {
+            name,
+            description,
+            price,
+            category_id,
+            image1,
+            image2,
+            status,
+          } = data;
+          setName(name);
+          setDescription(description);
+          setPrice(price);
+          setCategoryID(category_id);
+          setImage1(image1);
+          setImage2(image2);
+          setStatus(status);
+        } else {
+          Swal.fire({
+            text: "Product data not found",
+            icon: "error",
+          });
+        }
+      } catch (error) {
         Swal.fire({
-          text: "Product data not found",
+          text: "Error fetching product data",
           icon: "error",
         });
       }
-    } catch (error) {
-      Swal.fire({
-        text: "Error fetching product data",
-        icon: "error",
-      });
     }
   };
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get('http://127.0.0.1:8000/api/categories');
+      const response = await axios.get("http://127.0.0.1:8000/api/categories", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setCategories(response.data);
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      console.error("Error fetching categories:", error);
     }
   };
 
@@ -79,14 +102,19 @@ const EditProductForm = () => {
     try {
       const response = await axios.post(
         `http://127.0.0.1:8000/api/products/${id}`,
-        formData
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       const { data } = response;
       Swal.fire({
         icon: "success",
         text: data.message,
       });
-      navigate("/");
+      navigate("/product");
     } catch ({ response }) {
       if (response && response.status === 422) {
         setValidationError(response.data.errors);
@@ -120,7 +148,6 @@ const EditProductForm = () => {
       reader.readAsDataURL(file);
     }
   };
-
 
   return (
     <div className="page-wrapper">
@@ -187,8 +214,10 @@ const EditProductForm = () => {
                       className="form-control"
                     >
                       <option value="">Select category</option>
-                      {categories.map(category => (
-                        <option key={category.id} value={category.id}>{category.Name}</option>
+                      {categories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.Name}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -208,52 +237,63 @@ const EditProductForm = () => {
                 </div>
                 <div className="col-lg-12">
                   <div className="form-group">
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                  {image1 && (
-                       <div style={{ marginRight: '10px' }}>
-                      <img
-                      src={`http://127.0.0.1:8000/img/${image1}`}
-                        alt="Image 1"
-                        style={{ maxWidth: "250px", maxHeight: "250px" }}
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                      {image1 && (
+                        <div style={{ marginRight: "10px" }}>
+                          <img
+                            src={`http://127.0.0.1:8000/img/${image1}`}
+                            alt="Image 1"
+                            style={{ maxWidth: "250px", maxHeight: "250px" }}
+                          />
+                        </div>
+                      )}
+                      <input
+                        type="file"
+                        onChange={handleImage1Change}
+                        ref={imageInput1}
+                        name="image1"
+                        style={{ display: "none" }}
+                        className="custom-file-input"
                       />
-                      </div>
-                    )}
-                    <input
-                      type="file"
-                      onChange={handleImage1Change}
-                      ref={imageInput1}
-                      name="image1"
-                      style={{ display: 'none' }} 
-                      className="custom-file-input" 
-                    />
-                
-                       <label className="custom-file-label with-border" htmlFor="image1">Choose image</label>
-                  </div>
+
+                      <label
+                        className="custom-file-label with-border"
+                        htmlFor="image1"
+                      >
+                        Choose image
+                      </label>
+                    </div>
                   </div>
                 </div>
                 <div className="col-lg-12">
                   <div className="form-group">
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                  {image2 && (
-                             <div style={{ marginRight: '10px' }}>
-                      <img
-                      src={`http://127.0.0.1:8000/img/${image2}`}
-                        alt="Product Image 2"
-                        style={{ maxWidth: "250px", maxHeight: "250px" }}
-                      /></div>
-                    )}
-                    <input
-                      type="file"
-                      onChange={handleImage2Change}
-                      ref={imageInput2}
-                      name="image1"
-                      style={{ display: 'none' }} 
-                      className="custom-file-input" 
-                    />
-                
-                       <label className="custom-file-label with-border" htmlFor="image1">Choose image</label>
-                 
-                  </div>    </div>
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                      {image2 && (
+                        <div style={{ marginRight: "10px" }}>
+                          <img
+                            src={`http://127.0.0.1:8000/img/${image2}`}
+                            alt="Product Image 2"
+                            style={{ maxWidth: "250px", maxHeight: "250px" }}
+                          />
+                        </div>
+                      )}
+                      <input
+                        type="file"
+                        onChange={handleImage2Change}
+                        ref={imageInput2}
+                        name="image1"
+                        style={{ display: "none" }}
+                        className="custom-file-input"
+                      />
+
+                      <label
+                        className="custom-file-label with-border"
+                        htmlFor="image1"
+                      >
+                        Choose image
+                      </label>
+                    </div>{" "}
+                  </div>
                 </div>
                 <div className="col-lg-12">
                   <button type="submit" className="btn btn-submit me-2">

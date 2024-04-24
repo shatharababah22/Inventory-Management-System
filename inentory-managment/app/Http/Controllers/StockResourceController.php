@@ -91,11 +91,12 @@ class StockResourceController extends Controller
         if (!$stock) {
             return response()->json(['message' => 'stock not found'], 404);
         }
-
         $request->validate([
-            'min_qty' => 'required',
-            'max_qty' => 'required',
-            'current_qty' => 'required',
+            'min_qty' => 'required|numeric',
+            'max_qty' => 'required|numeric|gt:min_qty', // Ensure max_qty is greater than min_qty
+            'current_qty' => 'required|numeric',
+        ], [
+            'max_qty.gt' => 'The maximum quantity must be greater than the minimum quantity.',
         ]);
 
         $stock->min_qty = $request->min_qty;
@@ -106,7 +107,7 @@ class StockResourceController extends Controller
 
         $stock->save();
 
-        return response()->json($stock);
+        return response()->json(['message' => 'Stock updated successfully', 'stock' => $stock]);
     }
 
     /**
@@ -123,18 +124,18 @@ class StockResourceController extends Controller
             return response()->json(['message' => 'Stock not found'], 404);
         }
     
-        // Fetch the related product
+
         $product = $stock->product;
     
-        // Delete the stock
+
         $stock->delete();
     
-        // If a related product exists, update its status to 0
+
         if ($product) {
             $product->delete();
         }
     
-        return response()->json(['message' => 'Stock deleted successfully'], 200);
+        return response()->json(['message' => 'Stock and associated product deleted successfully'], 200);
     }
     
 }

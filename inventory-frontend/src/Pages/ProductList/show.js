@@ -5,14 +5,18 @@ import { useParams } from "react-router-dom";
 const ProductDetails = () => {
   const [product, setProduct] = useState([]);
   const { id } = useParams();
-
+  const token = localStorage.getItem('authToken');
   useEffect(() => {
     fetchProductDetails();
   }, []);
 
   const fetchProductDetails = async () => {
     try {
-      const response = await axios.get(`http://127.0.0.1:8000/api/products/${id}`);
+      const response = await axios.get(`http://127.0.0.1:8000/api/products/${id}`,{
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       setProduct(response.data);
       console.log(response.data);
     } catch (error) {

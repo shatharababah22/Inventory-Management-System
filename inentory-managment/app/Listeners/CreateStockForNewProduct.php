@@ -26,8 +26,8 @@ class CreateStockForNewProduct implements ShouldQueue
     
             $stock = new Stock();
             $stock->current_qty = 1; 
-            $stock->max_qty = 0;
-            $stock->min_qty = 0;
+            $stock->max_qty = 1;
+            $stock->min_qty = 1;
             $stock->product_id = $product->id;
             $stock->save();
         } catch (\Exception $e) {

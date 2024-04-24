@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 use App\Models\Category;
+use App\Models\Product;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 
@@ -54,42 +55,6 @@ class CategoryController extends Controller
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()->all() ]);
         }
-
-
-        // $category = new Category;
-        // $category->Name = $request->Name;
-
-        // $category->description = $request->description;
-     
-
-        
-        // $imageName = Str::random().'.'.$request->Image->getClientOriginalExtension();
-        
-        // // Store the uploaded image
-        // Storage::disk('public')->put('product/image', $request->Image, $imageName);
-        
-        // // Create the product
-        // $category = Category::create($request->post() + ['Image' => $imageName]);
-   
-        // return response()->json($category);
-      
-
-        // $validatedData = $request->validate([
-        //     'Name' => 'required',
-        //     'description' => 'required',
-        //     'Image' => 'required|image'
-        // ]);
-        
-        // $imageName = Str::random().'.'.$request->Image->getClientOriginalExtension();
-        
-        // Storage::disk('public')->put('product/image', $request->Image, $imageName);
-        
-        // Category::create(array_merge($validatedData, ['Image' => $imageName]));
-        
-        // return response()->json([
-        //     'message' => 'Product Created Successfully!!'
-        // ]);
-
 
         $categories = new Category();
 
@@ -170,7 +135,7 @@ class CategoryController extends Controller
     
         $category->save();
     
-        return response()->json($category);
+    return response()->json(['message' => 'Category updated successfully', 'category' => $category]);
     }
 
     /**
@@ -180,16 +145,25 @@ class CategoryController extends Controller
      * @return \Illuminate\Http\Response
      */
     
-    public function destroy($id)
-    {
-        $category = Category::find($id);
-        
-        if (!$category) {
-            return response()->json(['message' => 'Category not found'], 404);
-        }
-
-        $category->delete();
-
-        return response()->json(['message' => 'Category deleted successfully'], 200);
-    }
+     public function destroy($id)
+     {
+         $category = Category::findOrFail($id);
+         
+         $hasProducts = Product::where('category_id', $id)->exists();
+     
+         if ($hasProducts) {
+             return response()->json(['message' => 'Category has associated products. Can not delete.'], 400);
+         }
+         
+         if (!$category) {
+             return response()->json(['message' => 'Category not found'], 404);
+         }
+     
+         // If the category exists and doesn't have associated products, delete it
+         $category->delete();
+     
+         return response()->json(['message' => 'Category deleted successfully'], 200);
+     }
+     
+     
 }

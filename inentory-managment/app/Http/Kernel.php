@@ -35,12 +35,12 @@ class Kernel extends HttpKernel
             \Illuminate\Session\Middleware\StartSession::class,
             // \Illuminate\Session\Middleware\AuthenticateSession::class,
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
-            \App\Http\Middleware\VerifyCsrfToken::class, // CSRF protection enabled for web routes
+            // \App\Http\Middleware\VerifyCsrfToken::class, // CSRF protection enabled for web routes
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
         'api' => [
-            // \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
-            // 'throttle:api', // Throttle middleware is commented out for now
+             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+             'throttle:api', // Throttle middleware is commented out for now
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
     ];
@@ -62,5 +62,8 @@ class Kernel extends HttpKernel
         'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+        'sanctum' => \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+        'csrf.sanctum' => \App\Http\Middleware\VerifyCsrfTokenForSanctum::class,
+
     ];
 }

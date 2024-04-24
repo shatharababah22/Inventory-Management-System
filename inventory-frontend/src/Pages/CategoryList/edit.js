@@ -10,7 +10,7 @@ const EditCategoryForm = () => {
   const [description, setDescription] = useState("");
   const [Image, setImage] = useState(null);
   const [validationError, setValidationError] = useState({});
-  // State to manage the image URL
+  const token = localStorage.getItem("authToken");
   const imageInput = useRef(null);
 
   useEffect(() => {
@@ -20,15 +20,19 @@ const EditCategoryForm = () => {
   const fetchCategory = async () => {
     try {
       const response = await axios.get(
-        `http://127.0.0.1:8000/api/categories/${id}`
+        `http://127.0.0.1:8000/api/categories/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       const { data } = response;
       if (data) {
         const { Name, description, Image } = data;
         setName(Name);
         setDescription(description);
-        setImage(Image); // Set the URL of the image
-        // console.log(Image)
+        setImage(Image);
       } else {
         Swal.fire({
           text: "Category data not found",
@@ -42,7 +46,6 @@ const EditCategoryForm = () => {
       });
     }
   };
-
   const updateCategory = async (e) => {
     e.preventDefault();
     const formData = new FormData();
@@ -56,13 +59,20 @@ const EditCategoryForm = () => {
     try {
       const response = await axios.post(
         `http://127.0.0.1:8000/api/categories/${id}`,
-        formData
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       const { data } = response;
+
       Swal.fire({
         icon: "success",
         text: data.message,
       });
+
       navigate("/category");
     } catch ({ response }) {
       if (response && response.status === 422) {
@@ -75,12 +85,13 @@ const EditCategoryForm = () => {
       }
     }
   };
+
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = () => {
-        setImage(reader.result); // Update the image URL state
+        setImage(reader.result);
       };
       reader.readAsDataURL(file);
     }
